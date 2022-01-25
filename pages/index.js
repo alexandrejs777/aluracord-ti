@@ -1,12 +1,12 @@
 import appConfig from "../config.json";
 import { Box, Button, Text, Image, TextField } from "@skynexui/components";
 import React from "react";
-import { useRouter } from 'next/router';
+import { useRouter } from "next/router";
 
 // Componente React
 
 function Title(props) {
-  console.log(props);
+  // console.log(props);
   const Tag = props.tag || "h1";
   return (
     <>
@@ -41,7 +41,9 @@ export default HomePage; */
 
 export default function PaginaInicial() {
   // const username = "alexandrejs777";
-  const [username, setUsername] = React.useState('alexandrejs777');
+  const [username, setUsername] = React.useState("");
+  const [repos, setRepos] = React.useState("0");
+  const [name, setName] = React.useState("");
   const roteamento = useRouter();
 
   return (
@@ -80,10 +82,10 @@ export default function PaginaInicial() {
           {/* Formulário */}
           <Box
             as="form"
-            onSubmit={event => {
+            onSubmit={(event) => {
               event.preventDefault();
-              roteamento.push('/chat');
-              console.log("Alguém submeteu o form");
+              roteamento.push("/chat");
+              // console.log("Alguém submeteu o form");
             }}
             styleSheet={{
               display: "flex",
@@ -95,7 +97,7 @@ export default function PaginaInicial() {
               marginBottom: "32px",
             }}
           >
-            <Title tag="h2">Boas vindas de volta!</Title>
+            <Title tag="h2">Olá Dev, seja bem vindo!</Title>
             <Text
               variant="body3"
               styleSheet={{
@@ -103,7 +105,7 @@ export default function PaginaInicial() {
                 color: appConfig.theme.colors.neutrals[300],
               }}
             >
-              {appConfig.name}
+              {appConfig.name} {username}
             </Text>
 
             {/* <input 
@@ -118,13 +120,22 @@ export default function PaginaInicial() {
               }}
             /> */}
             <TextField
-            value={username}
-            onChange={function (event){
-              // Onde está o valor?
-              const valor = event.target.value;
-              // Trocar o valor da variável através do React e avisa quem precisa
-              setUsername(valor);
-            }}
+              value={username}
+              onChange={function (event) {
+                // Onde está o valor?
+                const valor = event.target.value;
+                // Trocar o valor da variável através do React e avisa quem precisa
+                fetch(`https://api.github.com/users/${valor}`).then(
+                  (response) =>
+                    response.json().then(response => {
+                      const repos = response.public_repos;
+                      const name = response.name;
+                      setRepos(repos);
+                      setName(name);
+                    })
+                );
+                setUsername(valor);
+              }}
               fullWidth
               textFieldColors={{
                 neutral: {
@@ -165,24 +176,45 @@ export default function PaginaInicial() {
               minHeight: "240px",
             }}
           >
-            <Image
-              styleSheet={{
-                borderRadius: "10%",
-                marginBottom: "16px",
-              }}
-              src={`https://github.com/${username}.png`}
-            />
-            <Text
-              variant="body4"
-              styleSheet={{
-                color: appConfig.theme.colors.neutrals[200],
-                backgroundColor: appConfig.theme.colors.neutrals[900],
-                padding: "3px 10px",
-                borderRadius: "1000px",
-              }}
-            >
-              {username}
-            </Text>
+            {username.length > 2 && (
+              <Image
+                styleSheet={{
+                  borderRadius: "10%",
+                  marginBottom: "16px",
+                  color: appConfig.theme.colors.neutrals["000"],
+                }}
+                src={`https://github.com/${username}.png`}
+                alt="Avatar do perfil"
+              />
+            )}
+
+            {username.length > 2 && (
+              <Text
+                variant="body4"
+                styleSheet={{
+                  color: appConfig.theme.colors.neutrals[200],
+                  backgroundColor: appConfig.theme.colors.neutrals[900],
+                  padding: "3px 10px",
+                  borderRadius: "1000px",
+                }}
+              >
+               {name}
+              </Text>
+            )}
+
+            {username.length > 2 && (
+              <Text
+                variant="body4"
+                styleSheet={{
+                  color: appConfig.theme.colors.neutrals[200],
+                  backgroundColor: appConfig.theme.colors.neutrals[900],
+                  padding: "3px 10px",
+                  borderRadius: "1000px",
+                }}
+              >
+                <p>Qtd. de Repositórios: {repos}</p>
+              </Text>
+            )}
           </Box>
           {/* Photo Area */}
         </Box>
