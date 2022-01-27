@@ -24,6 +24,11 @@ function GlobalStyle() {
         #__next > * {
           flex: 1;
         }
+
+        ::-webkit-scrollbar {
+          width: 0;
+        }
+
         /* ./App fit Height */
       `}</style>
     );
