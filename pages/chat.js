@@ -1,40 +1,60 @@
 import { Box, Text, TextField, Image, Button } from "@skynexui/components";
 import React from "react";
 import appConfig from "../config.json";
+import { useRouter } from "next/router";
 import { createClient } from "@supabase/supabase-js";
+import { ButtonSendSticker } from "../src/components/ButtonSendSticker.js";
 
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzMxODA1MiwiZXhwIjoxOTU4ODk0MDUyfQ.qDYaDWX59dsHnJLLgkELyQrRlO8SQ6UcUX75mrmcD_k";
 const SUPABASE_URL = "https://urtpobduhofgubgntosa.supabase.co";
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+function listenRealTimeMessages(addMessages) {
+  return supabaseClient
+    .from('messages')
+    .on('INSERT', ( liveResp ) => {
+      addMessages(liveResp.new);
+    })
+    .subscribe();
+}
+
 export default function ChatPage() {
-  // Sua lógica vai aqui
-  // Usuário
-  // Usuário digita no campo textarea
-  // Aperta enter para enviar
-  // Tem que adicionar o texto na listagem
 
-  // Dev
-  // [X] Campo criado
-  // [X] Vamos usar o onChange usa o useState (ter if pra caso seja enter pra limpar a variável)
-  // [X] Lista de mensagens
-
-  // ./Sua lógica vai aqui
-
+  const routing = useRouter();
+  const loggedUser = routing.query.username;
+  console.log("Usuário logado", loggedUser);
+  console.log("Roteamento ", routing.query);
   const [message, setMessage] = React.useState("");
-  const [messageList, setMessageList] = React.useState([]);
-
-  // const url = fetch();
+  const [messageList, setMessageList] = React.useState([
+    // {
+    //   id: 1,
+    //   from: "alexandrejs777",
+    //   text: ":sticker: https://i.pinimg.com/originals/0b/1c/23/0b1c2307c83e1ebdeed72e41b9a058ad.gif",
+    // },
+    // {
+    //   id: 2,
+    //   from: "peas",
+    //   text: "O ternário é meio triste",
+    // },
+  ]);
 
   React.useEffect(() => {
     supabaseClient
       .from("messages")
       .select("*")
-      .order('id', { ascending: false })
+      .order("id", { ascending: false })
       .then(({ data }) => {
         console.log("Dados da consulta", data);
         setMessageList(data);
+      });
+
+      listenRealTimeMessages(newMessage => {
+        setMessageList(currentValueOfList => {
+          return [
+            newMessage, ...currentValueOfList
+          ]
+        });
       });
   }, []);
 
@@ -42,25 +62,22 @@ export default function ChatPage() {
     const message = {
       // Esta id está vindo automaticamente do supabase
       // id: messageList.length + 1,
-      from: "alexandrejs777",
+      from: loggedUser,
       text: newMessage,
     };
 
     supabaseClient
-    .from("messages")
-    .insert([
-      // Tem que ser um objeto com os MESMOS CAMPOS que você escreveu nu supabase
-      message
-    ])
-    .then(({ data }) => {
-      setMessageList([data[0], ...messageList]);
-    });
+      .from("messages")
+      .insert([
+        // Tem que ser um objeto com os MESMOS CAMPOS que você escreveu nu supabase
+        message,
+      ])
+      .then(({ data }) => {
+        console.log('Criando mensagem: ', data);
+      });
 
-  setMessage("");
-
+    setMessage("");
   }
-
-  
 
   function handleDeleteMessage(id) {
     const filteredMessageList = messageList.filter((filteredMessage) => {
@@ -129,8 +146,8 @@ export default function ChatPage() {
             as="form"
             styleSheet={{
               display: "flex",
-              alignItems: "start",
-              justifyContent: "center",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
           >
             <TextField
@@ -148,6 +165,7 @@ export default function ChatPage() {
               type="textarea"
               styleSheet={{
                 width: "100%",
+                height: "100%",
                 border: "0",
                 resize: "none",
                 borderRadius: "5px",
@@ -157,7 +175,14 @@ export default function ChatPage() {
                 color: appConfig.theme.colors.neutrals[200],
               }}
             />
-            <Button
+            <ButtonSendSticker
+              onStickerClick={(sticker) => {
+                console.log('[USANDO O COMPONENTE] Salva esse sticker no banco');
+                handleNewMessage(`:sticker: ${sticker}`)
+              }} />
+            
+          </Box>
+          <Button
               type="submit"
               label="Enviar"
               onClick={(event) => {
@@ -165,8 +190,7 @@ export default function ChatPage() {
                 handleNewMessage(message);
               }}
               styleSheet={{
-                minHeight: "34px",
-                padding: "12px 12px",
+                height: "30px"
               }}
               buttonColors={{
                 contrastColor: appConfig.theme.colors.neutrals["000"],
@@ -175,7 +199,6 @@ export default function ChatPage() {
                 mainColorStrong: appConfig.theme.colors.primary[800],
               }}
             />
-          </Box>
         </Box>
       </Box>
     </Box>
@@ -255,7 +278,8 @@ function MessageList(props) {
                     marginRight: "8px",
                   }}
                   src={`https://github.com/${message.from}.png`}
-                />{/* </a> */}
+                />
+                {/* </a> */}
                 <Text tag="strong">{message.from}</Text>
                 <Text
                   styleSheet={{
@@ -287,7 +311,19 @@ function MessageList(props) {
                 }}
               />
             </Box>
-            {message.text}
+            {/* Declarativo */}
+            {/* Condicional: {message.text.startsWith(":sticker:").toString()} */}
+            {message.text.startsWith(":sticker:") 
+              ? (
+                <Image src={message.text.replace(':sticker:', '')}
+                styleSheet={{
+                  maxWidth: "120px",
+                }}/>
+              )
+              : (
+                message.text
+              )}
+            {/* {message.text} */}
           </Text>
         );
       })}

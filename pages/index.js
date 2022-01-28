@@ -44,7 +44,7 @@ export default function PaginaInicial() {
   const [username, setUsername] = React.useState("");
   const [repos, setRepos] = React.useState("0");
   const [name, setName] = React.useState("");
-  const roteamento = useRouter();
+  const routing = useRouter();
 
   return (
     <>
@@ -84,7 +84,7 @@ export default function PaginaInicial() {
             as="form"
             onSubmit={(event) => {
               event.preventDefault();
-              roteamento.push("/chat");
+              routing.push(`/chat?username=${username}`);
               // console.log("Alguém submeteu o form");
             }}
             styleSheet={{
@@ -121,6 +121,7 @@ export default function PaginaInicial() {
             /> */}
             <TextField
               value={username}
+              placeholder="Digite o usuário do GitHub..."
               onChange={function (event) {
                 // Onde está o valor?
                 const valor = event.target.value;
