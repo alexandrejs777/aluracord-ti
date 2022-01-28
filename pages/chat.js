@@ -1,12 +1,15 @@
 import { Box, Text, TextField, Image, Button } from "@skynexui/components";
 import React from "react";
 import appConfig from "../config.json";
+import { createClient } from "@supabase/supabase-js";
+
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzMxODA1MiwiZXhwIjoxOTU4ODk0MDUyfQ.qDYaDWX59dsHnJLLgkELyQrRlO8SQ6UcUX75mrmcD_k";
+const SUPABASE_URL = "https://urtpobduhofgubgntosa.supabase.co";
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export default function ChatPage() {
   // Sua lógica vai aqui
-
-  const [message, setMessage] = React.useState("");
-  const [messageList, setMessageList] = React.useState([]);
   // Usuário
   // Usuário digita no campo textarea
   // Aperta enter para enviar
@@ -19,15 +22,45 @@ export default function ChatPage() {
 
   // ./Sua lógica vai aqui
 
+  const [message, setMessage] = React.useState("");
+  const [messageList, setMessageList] = React.useState([]);
+
+  // const url = fetch();
+
+  React.useEffect(() => {
+    supabaseClient
+      .from("messages")
+      .select("*")
+      .order('id', { ascending: false })
+      .then(({ data }) => {
+        console.log("Dados da consulta", data);
+        setMessageList(data);
+      });
+  }, []);
+
   function handleNewMessage(newMessage) {
     const message = {
-      id: messageList.length + 1,
-      from: "vanessametonini",
+      // Esta id está vindo automaticamente do supabase
+      // id: messageList.length + 1,
+      from: "alexandrejs777",
       text: newMessage,
     };
-    setMessageList([message, ...messageList]);
-    setMessage("");
+
+    supabaseClient
+    .from("messages")
+    .insert([
+      // Tem que ser um objeto com os MESMOS CAMPOS que você escreveu nu supabase
+      message
+    ])
+    .then(({ data }) => {
+      setMessageList([data[0], ...messageList]);
+    });
+
+  setMessage("");
+
   }
+
+  
 
   function handleDeleteMessage(id) {
     const filteredMessageList = messageList.filter((filteredMessage) => {
@@ -212,6 +245,7 @@ function MessageList(props) {
               }}
             >
               <Box>
+                {/* <a href={`https://api.github.com/users/${username}`}> */}
                 <Image
                   styleSheet={{
                     width: "20px",
@@ -220,8 +254,8 @@ function MessageList(props) {
                     display: "inline-block",
                     marginRight: "8px",
                   }}
-                  src={`https://github.com/vanessametonini.png`}
-                />
+                  src={`https://github.com/${message.from}.png`}
+                />{/* </a> */}
                 <Text tag="strong">{message.from}</Text>
                 <Text
                   styleSheet={{
